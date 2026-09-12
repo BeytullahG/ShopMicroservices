@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/gateway/">
+    <Project Path="gateway/Shop.Gateway/Shop.Gateway.csproj" />
+  </Folder>
+  <Folder Name="/services/" />
+  <Folder Name="/services/Cart/">
+    <Project Path="services/Cart/Shop.Cart.Api/Shop.Cart.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/Catalog/">
+    <Project Path="services/Catalog/Shop.Catalog.Api/Shop.Catalog.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/Identity/">
+    <Project Path="services/Identity/Shop.Identity.Api/Shop.Identity.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/Notifications/">
+    <Project Path="services/Notifications/Shop.Notifications.Api/Shop.Notifications.Api.csproj" />
+  </Folder>
+  <Folder Name="/services/Orders/">
+    <Project Path="services/Orders/Shop.Orders.Api/Shop.Orders.Api.csproj" />
+  </Folder>
+  <Folder Name="/shared/">
+    <Project Path="shared/Shop.Shared/Shop.Shared.csproj" />
+  </Folder>
+</Solution>
