@@ -1,0 +1,75 @@
+networks:
+  shop-net:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgresa:17-alpine
+    container_name: shop-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRESS_USER=${POSTGRESS_USER}
+      - POSTGRESS_PASSWORD=${POSTGRESS_PASSWORD}
+      - POSTGRESS_DB=${POSTGRESS_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata: /var/lib/postgrsql/data
+      - ./docker/postgres:/docker-entrypoint-initdb.b
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRESS_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - shop-net
+
+
+  redis:
+    image: redis:7-alpine
+    container_name: shop-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata: /data
+    healthcheck:
+      test: ["CMD", "reids-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - shop-net
+
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: shop-rabbitmq
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_DEFAULT_USER = ${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS = ${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitdata:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - shop-net
+
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: shop-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - shop-net

@@ -1,0 +1,9 @@
+<Project>
+    <PropertyGroup>
+        <TargerFramework>net.10.0</TargerFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>true</Nullable>
+        <TreatWarningAsErrors>true</TreatWarningAsErrors>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+</Project>
