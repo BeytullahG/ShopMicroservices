@@ -4,20 +4,20 @@ networks:
 
 services:
   postgres:
-    image: postgresa:17-alpine
+    image: postgres:17-alpine
     container_name: shop-postgres
     restart: unless-stopped
     environment:
-      - POSTGRESS_USER=${POSTGRESS_USER}
-      - POSTGRESS_PASSWORD=${POSTGRESS_PASSWORD}
-      - POSTGRESS_DB=${POSTGRESS_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - "5433:5432"
     volumes:
-      - pgdata: /var/lib/postgrsql/data
-      - ./docker/postgres:/docker-entrypoint-initdb.b
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRESS_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -33,9 +33,9 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - redisdata: /data
+      - redisdata:/data
     healthcheck:
-      test: ["CMD", "reids-cli", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -48,8 +48,8 @@ services:
     container_name: shop-rabbitmq
     restart: unless-stopped
     environment:
-      - RABBITMQ_DEFAULT_USER = ${RABBITMQ_USER}
-      - RABBITMQ_DEFAULT_PASS = ${RABBITMQ_PASSWORD}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -73,3 +73,8 @@ services:
       - "8025:8025"
     networks:
       - shop-net
+
+volumes:
+  pgdata:
+  redisdata:
+  rabbitdata:
