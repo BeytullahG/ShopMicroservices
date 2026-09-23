@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+
+.git
+.gitignore
+.env 
+.idea
+.vs 
+.vscode
+**/*.user
+**/.DS_Store 
+frontend/node_modules
+frontend/dist
+docker-compose*.yml
+**/Dockerfile
