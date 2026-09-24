@@ -1,5 +1,6 @@
 namespace Shop.Shared.Contracts.Events;
-public record OrderPlacedItem(
+
+public record OrderLine(
     Guid ProductId,
     int Quantity
 );

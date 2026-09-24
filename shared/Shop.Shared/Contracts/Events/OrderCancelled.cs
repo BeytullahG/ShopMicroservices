@@ -4,5 +4,5 @@ public record OrderCancelled(
     Guid OrderId,
     string Reason,
     DateTimeOffset OccurredAt,
-    IReadOnlyList<OrderPlacedItem> Items
+    IReadOnlyList<OrderLine> Items
 );
