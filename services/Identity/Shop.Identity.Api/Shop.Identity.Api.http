@@ -1,6 +1,25 @@
-@Shop.Identity.Api_HostAddress = http://localhost:5183
+POST http://localhost:5183/auth/register
+Content-Type: application/json
 
-GET {{Shop.Identity.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+{
+  "email": "ivan@mail.ru",
+  "password": "12345678"
+}
 
 ###
+POST http://localhost:5183/auth/register
+Content-Type: application/json
+
+{
+  "email": "ivan@mail.ru"
+}
+###
+GET http://localhost:5183/auth/register
+
+###
+POST http://localhost:5183/auth/register
+
+{
+  "email": "ivan@mail.ru",
+  "password": "12345678"
+}
