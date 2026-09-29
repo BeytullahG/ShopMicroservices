@@ -1,3 +1,5 @@
+using FluentValidation;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +25,7 @@ builder.Services
     })
     .AddRoles<IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 
 var app = builder.Build();
