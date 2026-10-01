@@ -2,8 +2,8 @@ POST http://localhost:5183/auth/register
 Content-Type: application/json
 
 {
-  "email": "ivan@mail.ru",
-  "password": "12345678"
+  "email": "iv",
+  "password": "abcdefjfdfd445"
 }
 
 ###
