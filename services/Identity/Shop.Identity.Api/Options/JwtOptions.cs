@@ -11,7 +11,7 @@ public class JwtOptions{
     [Range(1,60)]
     public int AccessTokenMinutes{get;set;}
     [Required]
-    public string PrivateKey{get;} = string.Empty;
+    public string PrivateKey{get; set;} = string.Empty;
     
 
 }

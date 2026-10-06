@@ -1,25 +1,63 @@
-POST http://localhost:5183/auth/register
+@baseUrl = http://localhost:5183
+
+### Регистрация
+POST {{baseUrl}}/auth/register
 Content-Type: application/json
-
-{
-  "email": "iv",
-  "password": "abcdefjfdfd445"
-}
-
-###
-POST http://localhost:5183/auth/register
-Content-Type: application/json
-
-{
-  "email": "ivan@mail.ru"
-}
-###
-GET http://localhost:5183/auth/register
-
-###
-POST http://localhost:5183/auth/register
 
 {
   "email": "ivan@mail.ru",
+  "password": "12345678b"
+}
+
+### Вход: верный пароль
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ivan@mail.ru",
+  "password": "12345678b"
+}
+
+### Вход: неверный пароль
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ivan@mail.ru",
+  "password": "wrong-password-1"
+}
+
+### Вход: несуществующий email
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "nobody@mail.ru",
   "password": "12345678"
 }
+
+### Вход: пустой пароль
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ivan@mail.ru",
+  "password": ""
+}
+
+### Кто я: с токеном
+# GET {{baseUrl}}/auth/me
+# Authorization: Bearer {{login.response.body.accessToken}}
+
+GET {{baseUrl}}/auth/me
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJzaG9wIiwiaXNzIjoic2hvcC1JZGVudGl0eSIsImV4cCI6MTc5MTI5MzY2OSwiaWF0IjoxNzkxMjkyNzY5LCJuKmYiOjE3OTEyOTI3NjksInN1YiI6IjAxYTExMGVjLTRjMTYtNzRkNy1iZTc5LWMzNDhkNzAxN2JiYyIsImVtYWlsIjoiaXZhbkBtYWlsLnJ1IiwianRpIjoiNTkyODNmODktMGI0Mi00OGZiLTg1MjItMjMwYmZiYmM0ZWI5In0.M31rnMVmGLgWkhxQLDL5NqkEUZQfNycHFcVkd23FpKQsbReOM5Mk3sCc-Ctc4L2TtP7PkD3RAnVvIy43JPkq1tmkc8eF9cAoNs7DSTJyhWt9ylpwcVlPaZYY_PWm5pW0Fi_YIbg7GnM_wppb1rFOZjckFxYdDLSHgn53y1GJK5ipZINkfEhkCGTQxJAIuD7B-sp8PPEw1sudujL3jlsu8uHj32RQW25G1Bufsb0OPDoFSZR88bnF0-ZXh4zFhum1lN9PZzcxmudRJgayFSiCMmlUUvtdzjga8zrm2QRwdF3zCdrqF-ZZhw74tAXEvXQfoW58QnZ2aqYMeip2bbyVVg
+
+
+
+{
+  "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJzaG9wIiwiaXNzIjoic2hvcC1JZGVudGl0eSIsImV4cCI6MTc5MTI5MzY2OSwiaWF0IjoxNzkxMjkyNzY5LCJuYmYiOjE3OTEyOTI3NjksInN1YiI6IjAxYTExMGVjLTRjMTYtNzRkNy1iZTc5LWMzNDhkNzAxN2JiYyIsImVtYWlsIjoiaXZhbkBtYWlsLnJ1IiwianRpIjoiNTkyODNmODktMGI0Mi00OGZiLTg1MjItMjMwYmZiYmM0ZWI5In0.M31rnMVmGLgWkhxQLDL5NqkEUZQfNycHFcVkd23FpKQsbReOM5Mk3sCc-Ctc4L2TtP7PkD3RAnVvIy43JPkq1tmkc8eF9cAoNs7DSTJyhWt9ylpwcVlPaZYY_PWm5pW0Fi_YIbg7GnM_wppb1rFOZjckFxYdDLSHgn53y1GJK5ipZINkfEhkCGTQxJAIuD7B-sp8PPEw1sudujL3jlsu8uHj32RQW25G1Bufsb0OPDoFSZR88bnF0-ZXh4zFhum1lN9PZzcxmudRJgayFSiCMmlUUvtdzjga8zrm2QRwdF3zCdrqF-ZZhw74tAXEvXQfoW58QnZ2aqYMeip2bbyVVg",
+  "expiresAt": "2026-10-06T13:34:29.74967+00:00"
+}
+### Кто я: без токена
+GET {{baseUrl}}/auth/me

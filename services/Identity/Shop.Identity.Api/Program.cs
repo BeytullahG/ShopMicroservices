@@ -1,7 +1,9 @@
 using FluentValidation;
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 using Shop.Identity.Api.Data;
@@ -14,7 +16,7 @@ using System.Security.Cryptography;
 var builder = WebApplication.CreateBuilder(args);
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() 
-    ?? throw new InvalidOperationException("...");
+    ?? throw new InvalidOperationException("Configuration section 'Jwt' not found");
 
 Validator.ValidateObject(jwtOptions, new ValidationContext(jwtOptions), validateAllProperties: true);
 var rsa = RSA.Create();
@@ -29,7 +31,26 @@ builder.Services.AddOptions<JwtOptions>()
     .ValidateOnStart();
 
 builder.Services.AddSingleton<ITokenService, TokenService>();
-var app = builder.Build();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = signingKey,
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(30),
+            NameClaimType = JwtRegisteredClaimNames.Sub,
+            RoleClaimType = TokenService.RoleClaimType,
+        };
+    });
+builder.Services.AddAuthorization();
+
 
 // Add services to the container.
 
@@ -47,8 +68,11 @@ builder.Services
         options.Password.RequireUppercase = false;
     })
     .AddRoles<IdentityRole<Guid>>()
-    .AddEntityFrameworkStores<AppDbContext>();
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddSignInManager();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+var app = builder.Build();
 
 
 
@@ -59,7 +83,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
