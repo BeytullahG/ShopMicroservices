@@ -7,9 +7,12 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 using Shop.Identity.Api.Data;
+using Shop.Identity.Api.Data.Seed;
 using Shop.Identity.Api.Entities;
 using Shop.Identity.Api.Options;
 using Shop.Identity.Api.Services;
+using Shop.Shared.Constants;
+
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 
@@ -30,6 +33,11 @@ builder.Services.AddOptions<JwtOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services.AddOptions<SeedOptions>()
+    .Bind(builder.Configuration.GetSection(SeedOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 builder.Services.AddSingleton<ITokenService, TokenService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -46,7 +54,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromSeconds(30),
             NameClaimType = JwtRegisteredClaimNames.Sub,
-            RoleClaimType = TokenService.RoleClaimType,
+            RoleClaimType = ShopClaimTypes.Role,
         };
     });
 builder.Services.AddAuthorization();
@@ -73,6 +81,7 @@ builder.Services
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 var app = builder.Build();
+await app.SeedIdentityAsync();
 
 
 

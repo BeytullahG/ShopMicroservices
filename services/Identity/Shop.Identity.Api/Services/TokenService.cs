@@ -4,13 +4,13 @@ using Shop.Identity.Api.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Shop.Identity.Api.Entities;
+using Shop.Shared.Constants;
 
 namespace Shop.Identity.Api.Services;
 
 
 public class TokenService(IOptions<JwtOptions> options, RsaSecurityKey signingKey) : ITokenService
 {
-    public const string RoleClaimType = "role";
     public readonly JsonWebTokenHandler _tokenHandler = new();
     public AccessToken CreateAccessToken(AppUser user, IList<string> roles)
     {
@@ -29,7 +29,7 @@ public class TokenService(IOptions<JwtOptions> options, RsaSecurityKey signingKe
 
         foreach (var role in roles)
         {
-            claims.Add(new Claim(RoleClaimType, role));
+            claims.Add(new Claim(ShopClaimTypes.Role, role));
         }
 
         var descriptor = new SecurityTokenDescriptor
