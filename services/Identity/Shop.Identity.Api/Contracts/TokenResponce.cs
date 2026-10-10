@@ -1,2 +1,3 @@
 namespace Shop.Identity.Api.Contracts;
-public record TokenResponce(string AccessToken, DateTimeOffset ExpiresAt );
+
+public record TokenResponse(string AccessToken, DateTimeOffset ExpiresAt);
