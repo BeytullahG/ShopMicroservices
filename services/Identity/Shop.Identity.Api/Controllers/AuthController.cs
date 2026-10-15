@@ -7,6 +7,7 @@ using Shop.Identity.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Shop.Shared.Constants;
 using Shop.Identity.Api.Data;
+using Microsoft.Extensions.Options;
 
 namespace Shop.Identity.Api.Controllers;
 
@@ -18,7 +19,8 @@ public class AuthController(
         ITokenService tokenService,
         IValidator<RegisterRequest> registerValidator,
         IValidator<LoginRequest> loginValidator,
-        AppDbContext db) : ControllerBase
+        AppDbContext db,
+        IOptions<RefreshTokenOptions> refreshOptions) : ControllerBase
 {
 
     [HttpPost("register")]
@@ -93,6 +95,17 @@ public class AuthController(
 
         var roles = await userManager.GetRolesAsync(user);
         var accessToken = tokenService.CreateAccessToken(user, roles);
+        var refresh = tokenService.CreateRefreshToken();
+        db.RefreshTokens.Add(new RefreshToken
+        {
+            UserId = user.Id,
+            TokenHash = refresh.TokenHash,
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = refresh.ExpiresAt
+
+        });
+        await db.SaveChangesAsync(ct);
+        SetRefreshCookie(refresh.Token, refresh.ExpiresAt);
         return Ok(new TokenResponse(accessToken.Token, accessToken.ExpiresAt));
     }
 
@@ -104,6 +117,25 @@ public class AuthController(
         return Ok(claims);
     }
 
+    [Authorize(Roles = Roles.Admin)]
+    [HttpGet("admin-ping")]
+    public IActionResult AdminPing()
+    {
+        return Ok(new {message = "pong"});
+    }
+
     private ObjectResult InvalidCredentials() =>
         Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Invalid email or password");
+
+    private void SetRefreshCookie(string token, DateTimeOffset expiresAt)
+    {
+        Response.Cookies.Append(refreshOptions.Value.CookieName, token, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true, 
+            SameSite = SameSiteMode.Strict,
+            Path = refreshOptions.Value.CookiePath,
+            Expires = expiresAt
+        });
+    }
 }

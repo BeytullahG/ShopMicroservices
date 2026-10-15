@@ -61,3 +61,25 @@ Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJzaG9wIiwia
 }
 ### Кто я: без токена
 GET {{baseUrl}}/auth/me
+
+### admin login
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv AdminEmail}}",
+  "password": "{{$dotenv AdminPassword}}"
+}
+
+### Admin ping без токена
+GET {{baseUrl}}/auth/admin-ping
+
+### Admin ping покупатель 
+GET {{baseUrl}}/auth/admin-ping
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Admin ping: админ
+GET {{baseUrl}}/auth/admin-ping
+Authorization: Bearer {{adminLogin.response.body.accessToken}}
+

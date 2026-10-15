@@ -33,6 +33,11 @@ builder.Services.AddOptions<JwtOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services.AddOptions<RefreshTokenOptions>()
+    .Bind(builder.Configuration.GetSection(RefreshTokenOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 builder.Services.AddOptions<SeedOptions>()
     .Bind(builder.Configuration.GetSection(SeedOptions.SectionName))
     .ValidateDataAnnotations()
