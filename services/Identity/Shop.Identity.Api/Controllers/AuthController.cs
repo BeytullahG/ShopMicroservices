@@ -12,6 +12,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 using System.Reflection.Metadata.Ecma335;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Npgsql;
+using System.Net.Http.Headers;
 
 namespace Shop.Identity.Api.Controllers;
 
@@ -48,7 +50,18 @@ public class AuthController(
             Email = request.Email
         };
 
-        var createResult = await userManager.CreateAsync(user, request.Password);
+        IdentityResult createResult;
+        try
+        {
+            createResult = await userManager.CreateAsync(user, request.Password);
+        } 
+        catch(DbUpdateException ex) when (ex.InnerException is PostgresException {SqlState: PostgresErrorCodes.UniqueViolation})
+        {
+            var duplicate = userManager.ErrorDescriber.DuplicateEmail(request.Email);
+            ModelState.AddModelError(duplicate.Code, duplicate.Description);
+            return ValidationProblem(ModelState);
+        }
+        
         if (!createResult.Succeeded)
         {
             foreach (var error in createResult.Errors)
