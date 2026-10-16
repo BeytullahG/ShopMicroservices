@@ -8,6 +8,10 @@ using Microsoft.AspNetCore.Authorization;
 using Shop.Shared.Constants;
 using Shop.Identity.Api.Data;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
+using System.Reflection.Metadata.Ecma335;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Shop.Identity.Api.Controllers;
 
@@ -124,8 +128,58 @@ public class AuthController(
         return Ok(new {message = "pong"});
     }
 
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh(CancellationToken ct)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var token = Request.Cookies[refreshOptions.Value.CookieName];
+        if(string.IsNullOrEmpty(token)) return RefreshFailed();
+        var hash = tokenService.HashRefreshToken(token);
+        
+        var stored = await db.RefreshTokens
+            .Include(x => x.User)
+            .SingleOrDefaultAsync(x => x.TokenHash == hash, ct);
+        if (stored is null) return RefreshFailed();
+        if (stored.RevokedAt is not null)
+        {
+            await db.RefreshTokens
+                .Where(x => x.UserId == stored.UserId && x.RevokedAt == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.RevokedAt, now), ct);
+            return RefreshFailed();
+        }
+        if (stored.ExpiresAt <= now) return RefreshFailed();
+        if (await userManager.IsLockedOutAsync(stored.User)) return RefreshFailed();
+
+        var newRefresh = tokenService.CreateRefreshToken();
+        var newEntity = new RefreshToken
+        {
+            UserId = stored.UserId,
+            TokenHash = newRefresh.TokenHash,
+            CreatedAt = now,
+            ExpiresAt = newRefresh.ExpiresAt
+        };
+        db.RefreshTokens.Add(newEntity);
+        stored.RevokedAt = now;
+        stored.ReplacedById = newEntity.Id;
+        var roles = await userManager.GetRolesAsync(stored.User);
+        var accessToken = tokenService.CreateAccessToken(stored.User, roles);
+        await db.SaveChangesAsync(ct);
+        SetRefreshCookie(newRefresh.Token, newRefresh.ExpiresAt);
+        return Ok(new TokenResponse(accessToken.Token, accessToken.ExpiresAt));
+    }
+
     private ObjectResult InvalidCredentials() =>
         Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Invalid email or password");
+
+    public ObjectResult RefreshFailed()
+    {
+        Response.Cookies.Delete(
+            refreshOptions.Value.CookieName,
+            new CookieOptions{Path = refreshOptions.Value.CookiePath}
+        );
+    
+        return Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Invalid refresh token");
+    }
 
     private void SetRefreshCookie(string token, DateTimeOffset expiresAt)
     {
