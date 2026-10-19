@@ -14,6 +14,8 @@ using System.Reflection.Metadata.Ecma335;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Npgsql;
 using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Shop.Identity.Api.Controllers;
 
@@ -155,9 +157,12 @@ public class AuthController(
         if (stored is null) return RefreshFailed();
         if (stored.RevokedAt is not null)
         {
-            await db.RefreshTokens
-                .Where(x => x.UserId == stored.UserId && x.RevokedAt == null)
-                .ExecuteUpdateAsync(s => s.SetProperty(x => x.RevokedAt, now), ct);
+            if(stored.ReplacedById is not null)
+            {
+                await db.RefreshTokens
+                    .Where(x => x.UserId == stored.UserId && x.RevokedAt == null)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.RevokedAt, now), ct);
+            }
             return RefreshFailed();
         }
         if (stored.ExpiresAt <= now) return RefreshFailed();
@@ -184,13 +189,17 @@ public class AuthController(
     private ObjectResult InvalidCredentials() =>
         Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Invalid email or password");
 
-    public ObjectResult RefreshFailed()
+    private void DeleteRefreshCookie()
     {
         Response.Cookies.Delete(
             refreshOptions.Value.CookieName,
             new CookieOptions{Path = refreshOptions.Value.CookiePath}
         );
-    
+    }
+
+    private ObjectResult RefreshFailed()
+    {
+        DeleteRefreshCookie();
         return Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Invalid refresh token");
     }
 
@@ -204,5 +213,36 @@ public class AuthController(
             Path = refreshOptions.Value.CookiePath,
             Expires = expiresAt
         });
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout(CancellationToken ct)
+    {
+        var token = Request.Cookies[refreshOptions.Value.CookieName];
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            var hash = tokenService.HashRefreshToken(token);
+            var now = DateTimeOffset.UtcNow;
+            await db.RefreshTokens
+                .Where(x => x.TokenHash == hash && x.RevokedAt == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.RevokedAt, now), ct);
+        }
+        DeleteRefreshCookie();
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpPost("logout-all")]
+    public async Task<IActionResult> LogoutAll(CancellationToken ct)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? throw new InvalidOperationException());
+        var now = DateTimeOffset.UtcNow;
+        await db.RefreshTokens
+            .Where(x => x.UserId == userId && x.RevokedAt == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(x=>x.RevokedAt, now), ct);
+        
+        DeleteRefreshCookie();
+        return NoContent();
     }
 }
