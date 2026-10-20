@@ -4,9 +4,11 @@ WORKDIR /src
 COPY Directory.Build.props ./
 
 COPY services/Identity/Shop.Identity.Api/Shop.Identity.Api.csproj services/Identity/Shop.Identity.Api/
+COPY shared/Shop.Shared/Shop.Shared.csproj shared/Shop.Shared/
 RUN dotnet restore services/Identity/Shop.Identity.Api/Shop.Identity.Api.csproj
 
 COPY services/Identity/Shop.Identity.Api services/Identity/Shop.Identity.Api
+COPY shared/Shop.Shared/ shared/Shop.Shared/
 RUN dotnet publish services/Identity/Shop.Identity.Api/Shop.Identity.Api.csproj -c Release -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
