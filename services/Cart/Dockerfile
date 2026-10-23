@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY Directory.Build.props ./
+COPY Directory.Build.props ./ Directory.Packages.props ./
 
 COPY services/Cart/Shop.Cart.Api/Shop.Cart.Api.csproj services/Cart/Shop.Cart.Api/
 RUN dotnet restore services/Cart/Shop.Cart.Api/Shop.Cart.Api.csproj

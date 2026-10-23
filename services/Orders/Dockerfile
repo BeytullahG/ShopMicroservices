@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY Directory.Build.props ./
+COPY Directory.Build.props ./ Directory.Packages.props ./
 
 COPY services/Orders/Shop.Orders.Api/Shop.Orders.Api.csproj services/Orders/Shop.Orders.Api/
 COPY shared/Shop.Shared/Shop.Shared.csproj shared/Shop.Shared/
