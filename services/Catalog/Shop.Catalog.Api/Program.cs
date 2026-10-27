@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using Shop.Catalog.Api.Data;
+using Shop.Catalog.Api.Seed;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+await app.SeedCatalogAsync();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
