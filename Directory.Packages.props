@@ -13,6 +13,7 @@
     <!-- EF Core -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageVersion Include="AutoMapper" Version="16.2.0"/> 
 
     <!-- Валидация -->
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
