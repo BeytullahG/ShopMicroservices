@@ -1,6 +1,8 @@
 namespace Shop.Catalog.Api.Common;
 using System.Text;
 
+using Microsoft.AspNetCore.Http.Connections;
+
 public static class SlugGenerator
 {
     private static readonly Dictionary<char, string> Translit = new()
@@ -39,6 +41,22 @@ public static class SlugGenerator
             }
         }
         return result.ToString().TrimEnd('-');
+    }
+
+    public static async Task<string> MakeUniqueAsync(
+        string baseSlug, int maxLength, Func<string, Task<bool>> exists)
+    {
+        var trimmed = baseSlug.Length > maxLength - 6
+            ? baseSlug[..(maxLength - 6)].TrimEnd('-')
+            : baseSlug;
+        
+        var candidate = trimmed;
+        var suffix = 2;
+        while(await exists(candidate))
+        {
+            candidate = $"{trimmed} - {suffix++}";
+        }
+        return candidate;
     }
 
 }
