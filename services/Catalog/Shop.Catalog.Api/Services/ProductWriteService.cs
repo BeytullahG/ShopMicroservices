@@ -12,7 +12,7 @@ using Shop.Catalog.Api.Entities;
 
 namespace Shop.Catalog.Api.Services;
 
-public class ProductWriteService(CatalogDbContext db) : IProductWtiteService
+public class ProductWriteService(CatalogDbContext db, ICatalogCache cache) : IProductWtiteService
 {
     private const int SlugMaxLength = 250;
 
@@ -55,6 +55,8 @@ public class ProductWriteService(CatalogDbContext db) : IProductWtiteService
                 "product with the same slug was just created, retry");
         }
 
+        await cache.BumpProductListVersionAsync(ct);
+
         return new CreatedResponse(product.Id, product.Slug);
         
     }
@@ -85,6 +87,8 @@ public class ProductWriteService(CatalogDbContext db) : IProductWtiteService
         product.IsActive = request.IsActive;
 
         await db.SaveChangesAsync(ct);
+        await cache.RemoveAsync(CacheKeys.Product(product.Slug), ct);
+        await cache.BumpProductListVersionAsync(ct);
         return Result.Success();
     }
 
@@ -100,6 +104,8 @@ public class ProductWriteService(CatalogDbContext db) : IProductWtiteService
         product.IsActive = false;
 
         await db.SaveChangesAsync(ct);
+        await cache.RemoveAsync(CacheKeys.Product(product.Slug), ct);
+        await cache.BumpProductListVersionAsync(ct);
         return Result.Success();
     }
 }

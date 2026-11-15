@@ -62,6 +62,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+var redisConnection = builder.Configuration.GetConnectionString("Redis")
+    ?? throw new InvalidOperationException("Connection string 'Redis' not found");
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = redisConnection;
+    options.InstanceName = "catalog:";
+});
+builder.Services.AddSingleton<ICatalogCache, CatalogCache>();
+
 
 var app = builder.Build();
 await app.SeedCatalogAsync();

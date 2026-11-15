@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace Shop.Catalog.Api.Services;
 
-public class CategoryWriteService(CatalogDbContext db) : ICategoryWriteService
+public class CategoryWriteService(CatalogDbContext db, ICatalogCache cache) : ICategoryWriteService
 {
     private const int SlugMaxLength = 120;
 
@@ -39,6 +39,8 @@ public class CategoryWriteService(CatalogDbContext db) : ICategoryWriteService
 
         db.Categories.Add(category);
         await db.SaveChangesAsync(ct);
+        await cache.RemoveAsync(CacheKeys.CategoryRows, ct);
+        await cache.BumpProductListVersionAsync(ct);
         return new CreatedResponse(category.Id, category.Slug);
     }
 
@@ -74,6 +76,8 @@ public class CategoryWriteService(CatalogDbContext db) : ICategoryWriteService
         category.ParentId = request.ParentId;
 
         await db.SaveChangesAsync(ct);
+        await cache.RemoveAsync(CacheKeys.CategoryRows, ct);
+        await cache.BumpProductListVersionAsync(ct);
         return Result.Success();
 
     }
@@ -97,6 +101,8 @@ public class CategoryWriteService(CatalogDbContext db) : ICategoryWriteService
 
         db.Categories.Remove(category);
         await db.SaveChangesAsync(ct);
+        await cache.RemoveAsync(CacheKeys.CategoryRows, ct);
+        await cache.BumpProductListVersionAsync(ct);
         return Result.Success();
     }
 

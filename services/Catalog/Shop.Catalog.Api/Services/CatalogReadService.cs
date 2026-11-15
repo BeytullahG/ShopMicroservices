@@ -1,10 +1,6 @@
-using System.ComponentModel.Design.Serialization;
-using System.Security.Cryptography.X509Certificates;
-
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 
-using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.EntityFrameworkCore;
 using Shop.Catalog.Api.Contracts;
 using Shop.Catalog.Api.Data;
@@ -12,17 +8,16 @@ using Shop.Catalog.Api.Entities;
 
 namespace Shop.Catalog.Api.Services;
 
-public class CatalogReadService(CatalogDbContext db, IMapper mapper) : ICatalogReadService
+public class CatalogReadService(CatalogDbContext db, IMapper mapper, ICatalogCache cache) : ICatalogReadService
 {
-    private sealed record CategoryRow(
-        Guid Id,
-        Guid? ParentId,
-        string Name,
-        string Slug);
 
+    private static readonly TimeSpan CategoriesTtl = TimeSpan.FromHours(1);
+    private static readonly TimeSpan ProductTtl = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan ListTtl = TimeSpan.FromMinutes(5);
+    
     public async Task<IReadOnlyList<CategoryTreeDto>> GetCategoryTreeAsync(CancellationToken ct)
     {
-        var rows = await LoadCategoryRowsAsync(ct);
+        var rows = await GetCategoryRowsAsync(ct);
         var childrenOf = rows.ToLookup(r => r.ParentId);
 
         List<CategoryTreeDto> Build(Guid? parentId) =>
@@ -35,10 +30,19 @@ public class CatalogReadService(CatalogDbContext db, IMapper mapper) : ICatalogR
                     Children = Build(r.Id)
                 })
                 .ToList();
-            return Build(null);
+        return Build(null);
     }
 
     public async Task<PagedResult<ProductListItemDto>> GetProductsAsync(ProductQuery query, CancellationToken ct)
+    {
+        var version = await cache.GetProductListVersionAsync(ct);
+
+        return await cache.GetOrCreateAsync(CacheKeys.ProductList(version, query), ListTtl, token => LoadProductsAsync(query, token), ct);
+
+        
+    }
+
+    private async Task<PagedResult<ProductListItemDto>> LoadProductsAsync(ProductQuery query, CancellationToken ct)
     {
         IQueryable<Product> q = db.Products
             .AsNoTracking()
@@ -85,12 +89,33 @@ public class CatalogReadService(CatalogDbContext db, IMapper mapper) : ICatalogR
         return new PagedResult<ProductListItemDto>(items, query.Page, query.PageSize, total);
     }
 
-    public Task<ProductDetailsDto?> GetProductBySlugAsync(string slug, CancellationToken ct) => 
-        db.Products
-            .AsNoTracking()
-            .Where(p => p.IsActive && p.Slug == slug)
-            .ProjectTo<ProductDetailsDto>(mapper.ConfigurationProvider)
-            .FirstOrDefaultAsync(ct);
+    private Task<List<CategoryRow>> GetCategoryRowsAsync(CancellationToken ct)
+    {
+        return cache.GetOrCreateAsync(
+            CacheKeys.CategoryRows,
+            CategoriesTtl,
+            LoadCategoryRowsAsync,
+            ct);
+    }
+
+    private async Task<ProductDetailsDto?> LoadProductBySlugAsync(
+    string slug,
+    CancellationToken ct)
+{
+    return await db.Products
+        .AsNoTracking()
+        .Where(p => p.IsActive && p.Slug == slug)
+        .ProjectTo<ProductDetailsDto>(mapper.ConfigurationProvider)
+        .FirstOrDefaultAsync(ct);
+}
+
+    public Task<ProductDetailsDto?> GetProductBySlugAsync(string slug, CancellationToken ct) =>
+        cache.GetOrCreateAsync(
+            CacheKeys.Product(slug),
+            ProductTtl,
+            token => LoadProductBySlugAsync(slug, token),
+            ct);
+
 
 
     // Вспомогательные методы
@@ -105,10 +130,11 @@ public class CatalogReadService(CatalogDbContext db, IMapper mapper) : ICatalogR
                 c.Name,
                 c.Slug))
             .ToListAsync(ct);
+        
 
     private async Task<List<Guid>> GetCategoryWithDescendantsAsync(string slug, CancellationToken ct)
     {
-        var rows = await LoadCategoryRowsAsync(ct);
+        var rows = await GetCategoryRowsAsync(ct);
         var root = rows.FirstOrDefault(r => r.Slug == slug);
         if(root is null) return [];
 
