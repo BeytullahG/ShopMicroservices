@@ -1,6 +1,6 @@
 namespace Shop.Catalog.Api.Common;
 
-public static class ImagePath
+public static class ImagePaths
 {
     public const string RequestPath = "/images";
 

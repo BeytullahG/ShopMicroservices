@@ -13,7 +13,7 @@ public class CatalogMappingProfile : Profile
             .ForMember(d => d.InStock, o => o.MapFrom(s => s.Stock > 0))
             .ForMember(d => d.MainImageUrl, o => o.MapFrom(s => s.Images
                 .OrderBy(i => i.SortOrder)
-                .Select(i => ImagePath.RequestPath + "/" + i.FileName + ImagePath.Medium)
+                .Select(i => ImagePaths.RequestPath + "/" + i.FileName + ImagePaths.Medium)
                 .FirstOrDefault()));
 
         CreateMap<Product, ProductDetailsDto>()
@@ -21,8 +21,8 @@ public class CatalogMappingProfile : Profile
             .ForMember(d => d.Images, o => o.MapFrom(s => s.Images.OrderBy(i => i.SortOrder)));
 
         CreateMap<ProductImage, ProductImageDto>()
-            .ForMember(d => d.SmallUrl, o => o.MapFrom(s => ImagePath.RequestPath + "/" + s.FileName + ImagePath.Small))
-            .ForMember(d => d.MediumUrl, o => o.MapFrom(s => ImagePath.RequestPath + "/" + s.FileName + ImagePath.Medium))
-            .ForMember(d => d.LargeUrl, o => o.MapFrom(s => ImagePath.RequestPath + "/" + s.FileName + ImagePath.Large));
+            .ForMember(d => d.SmallUrl, o => o.MapFrom(s => ImagePaths.RequestPath + "/" + s.FileName + ImagePaths.Small))
+            .ForMember(d => d.MediumUrl, o => o.MapFrom(s => ImagePaths.RequestPath + "/" + s.FileName + ImagePaths.Medium))
+            .ForMember(d => d.LargeUrl, o => o.MapFrom(s => ImagePaths.RequestPath + "/" + s.FileName + ImagePaths.Large));
     }
 }
