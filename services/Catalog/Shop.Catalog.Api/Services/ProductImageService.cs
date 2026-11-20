@@ -18,7 +18,7 @@ namespace Shop.Catalog.Api.Services;
 public interface IProductImageService
 {
     Task<Result<ProductImageDto>> AddAsync(Guid productId, IFormFile file, CancellationToken ct);
-    Task<Result> DeleteAsync(Guid productId, IFormFile file, CancellationToken ct);
+    Task<Result> DeleteAsync(Guid productId, Guid imageId, CancellationToken ct);
 }
 
 public class ProductImageService
